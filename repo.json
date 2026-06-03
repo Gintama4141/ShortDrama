@@ -1,0 +1,9 @@
+{
+    "name": "ShortDrama Extension",
+    "iconUrl": "https://play-lh.googleusercontent.com/EFMkS1T-8txjLFIl9QxjcTRLa7a7Muv08C04b7ongYgodoY_b2T3GpxzGAQEx-eitfQ=w256",
+    "description": "Kumpulan provider drama pendek (DramaBox, ReelShort, ShortMax, dll) untuk CloudStream 3",
+    "manifestVersion": 1,
+    "pluginLists": [
+      "https://raw.githubusercontent.com/Gintama4141/ShortDrama/builds/plugins.json"
+    ]
+}
