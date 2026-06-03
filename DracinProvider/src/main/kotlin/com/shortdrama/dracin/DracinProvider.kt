@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.ExtractorLinkType
+import com.lagradost.cloudstream3.utils.INFER_TYPE
 import com.lagradost.cloudstream3.utils.getQualityFromName
 import com.lagradost.cloudstream3.utils.newExtractorLink
 
@@ -112,8 +114,8 @@ abstract class DracinBaseProvider : MainAPI() {
         }
 
         return newAnimeLoadResponse(title, url, TvType.TvSeries) {
-            this.posterUrl = image
-            this.plot = desc
+            posterUrl = image
+            plot = desc
             addEpisodes(DubStatus.Subbed, episodes)
         }
     }
@@ -133,8 +135,7 @@ abstract class DracinBaseProvider : MainAPI() {
 
         val resp = app.get("$mainUrl/$sourceName/episode?id=$id&ep=$ep", headers = headers)
         val stream = tryParseJson<DracinStream>(resp.text)
-
-        val videos = mutableListOf<Pair<String?, String?>>()
+        var found = false
 
         if (stream != null) {
             val qualityList = stream.qualityList ?: stream.qualities ?: emptyList()
@@ -142,52 +143,53 @@ abstract class DracinBaseProvider : MainAPI() {
                 for (q in qualityList) {
                     val qUrl = q.url ?: continue
                     val qLabel = q.label ?: q.quality ?: "Unknown"
-                    videos.add(qLabel to qUrl)
+                    val quality = getQualityFromName(qLabel)
+                    val type = if (qUrl.contains(".m3u8")) ExtractorLinkType.M3U8 else INFER_TYPE
+                    callback.invoke(
+                        newExtractorLink(sourceName, "$name - $qLabel", qUrl, type) {
+                            this.quality = quality
+                        }
+                    )
+                    found = true
                 }
             } else {
                 val videoUrl = stream.videoUrl ?: stream.url
-                if (videoUrl != null) videos.add(null to videoUrl)
+                if (videoUrl != null) {
+                    val type = if (videoUrl.contains(".m3u8")) ExtractorLinkType.M3U8 else INFER_TYPE
+                    callback.invoke(
+                        newExtractorLink(sourceName, "$name - Video", videoUrl, type)
+                    )
+                    found = true
+                }
             }
         }
 
-        if (videos.isEmpty()) {
+        if (!found) {
             val fallback = tryParseJson<Map<String, Any>>(resp.text)
             if (fallback != null) {
                 for ((key, value) in fallback) {
                     if (value is String && (value.startsWith("http://") || value.startsWith("https://")) &&
                         (value.contains(".mp4") || value.contains(".m3u8"))
                     ) {
-                        videos.add(key to value)
+                        val type = if (value.contains(".m3u8")) ExtractorLinkType.M3U8 else INFER_TYPE
+                        callback.invoke(
+                            newExtractorLink(sourceName, "$name - $key", value, type)
+                        )
+                        found = true
                     }
                 }
             }
         }
 
-        for ((quality, videoUrl) in videos) {
-            if (videoUrl != null) {
-                val qualityNum = if (quality != null) getQualityFromName(quality) else -1
-                callback.invoke(
-                    newExtractorLink(
-                        sourceName,
-                        "${name} - ${quality ?: "Video"}",
-                        videoUrl,
-                        "",
-                        qualityNum,
-                        videoUrl.contains(".m3u8")
-                    )
-                )
-            }
-        }
-
-        return videos.isNotEmpty()
+        return found
     }
 
     private fun DracinItem.toSearchResult(): SearchResponse? {
         val itemId = id ?: bookId ?: return null
         val itemTitle = title ?: return null
         val itemImage = image ?: poster
-        return newSearchResponse(itemTitle, "?id=$itemId") {
-            this.posterUrl = itemImage
+        return newAnimeSearchResponse(itemTitle, "?id=$itemId", TvType.TvSeries) {
+            posterUrl = itemImage
         }
     }
 }
