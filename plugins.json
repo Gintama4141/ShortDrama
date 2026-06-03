@@ -1,0 +1,24 @@
+[
+    {
+        "iconUrl": "https://play-lh.googleusercontent.com/EFMkS1T-8txjLFIl9QxjcTRLa7a7Muv08C04b7ongYgodoY_b2T3GpxzGAQEx-eitfQ=w256",
+        "fileHash": "sha256-9b20c8a49b65c625b5310d077f9c4ae89df26e3c43cb7189df8d265b88c89937",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/Gintama4141/ShortDrama",
+        "fileSize": 24765,
+        "status": 1,
+        "language": "en",
+        "authors": [
+            "ShortDrama"
+        ],
+        "tvTypes": [
+            "Series",
+            "Movie",
+            "AsianDrama"
+        ],
+        "version": 3,
+        "internalName": "DracinProvider",
+        "description": "Kumpulan provider drama pendek dari berbagai platform via Anichin API",
+        "url": "https://raw.githubusercontent.com/Gintama4141/ShortDrama/builds/DracinProvider.cs3",
+        "name": "DracinProvider"
+    }
+]
