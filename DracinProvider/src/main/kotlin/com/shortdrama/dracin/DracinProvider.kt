@@ -5,6 +5,7 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.getQualityFromName
+import com.lagradost.cloudstream3.utils.newExtractorLink
 
 data class DracinResponse(
     @JsonProperty("items") val items: List<DracinItem>? = null,
@@ -50,7 +51,7 @@ abstract class DracinBaseProvider : MainAPI() {
     override val hasQuickSearch = true
     override val hasMainPage = true
     override var lang = "en"
-    override val supportedTypes = setOf(TvType.Series, TvType.AsianDrama)
+    override val supportedTypes = setOf(TvType.TvSeries, TvType.AsianDrama)
 
     abstract val sourceName: String
 
@@ -104,17 +105,16 @@ abstract class DracinBaseProvider : MainAPI() {
         val image = detail?.image ?: detail?.poster
         val desc = detail?.description ?: detail?.overview
         val episodes = (detail?.episodes ?: detail?.chapters ?: emptyList()).mapIndexed { index, ep ->
-            Episode(
-                episode = ep.ep ?: ep.episode ?: (index + 1),
-                name = ep.title ?: "Episode ${ep.ep ?: ep.episode ?: (index + 1)}",
-                data = "id=$id&ep=${ep.ep ?: ep.episode ?: (index + 1)}"
-            )
+            newEpisode("id=$id&ep=${ep.ep ?: ep.episode ?: (index + 1)}") {
+                this.name = ep.title ?: "Episode ${ep.ep ?: ep.episode ?: (index + 1)}"
+                this.episode = ep.ep ?: ep.episode ?: (index + 1)
+            }
         }
 
-        return newMovieLoadResponse(title, url, TvType.Series, url) {
+        return newAnimeLoadResponse(title, url, TvType.TvSeries) {
             this.posterUrl = image
             this.plot = desc
-            addEpisodes(DurationType.Other, episodes)
+            addEpisodes(DubStatus.Subbed, episodes)
         }
     }
 
@@ -167,7 +167,7 @@ abstract class DracinBaseProvider : MainAPI() {
             if (videoUrl != null) {
                 val qualityNum = if (quality != null) getQualityFromName(quality) else -1
                 callback.invoke(
-                    ExtractorLink(
+                    newExtractorLink(
                         sourceName,
                         "${name} - ${quality ?: "Video"}",
                         videoUrl,
